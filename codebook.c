@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <ogg/ogg.h>
+#include <yip-imports/ogg/ogg.h>
 #include "ivorbiscodec.h"
 #include "codebook.h"
 #include "misc.h"
@@ -37,7 +37,7 @@ static_codebook *vorbis_staticbook_unpack(oggpack_buffer *opb){
   s->entries=oggpack_read(opb,24);
   if(s->entries==-1)goto _eofout;
 
-  if(_ilog(s->dim)+_ilog(s->entries)>24)goto _eofout;
+  if(_ilog((unsigned int)s->dim)+_ilog((unsigned int)s->entries)>24)goto _eofout;
 
   /* codeword ordering.... length ordered or unordered? */
   switch((int)oggpack_read(opb,1)){
@@ -81,7 +81,7 @@ static_codebook *vorbis_staticbook_unpack(oggpack_buffer *opb){
       s->lengthlist=(long *)_ogg_malloc(sizeof(*s->lengthlist)*s->entries);
 
       for(i=0;i<s->entries;){
-	long num=oggpack_read(opb,_ilog(s->entries-i));
+	long num=oggpack_read(opb,_ilog((unsigned int)(s->entries-i)));
 	if(num==-1)goto _eofout;
 	if(length>32 || num>s->entries-i ||
 	   (num>0 && (num-1)>>(length>>1)>>((length+1)>>1))>0){
@@ -99,7 +99,7 @@ static_codebook *vorbis_staticbook_unpack(oggpack_buffer *opb){
   }
   
   /* Do we have a mapping to unpack? */
-  switch((s->maptype=oggpack_read(opb,4))){
+  switch((s->maptype=(int)oggpack_read(opb,4))){
   case 0:
     /* no mapping */
     break;
@@ -109,18 +109,18 @@ static_codebook *vorbis_staticbook_unpack(oggpack_buffer *opb){
 
     s->q_min=oggpack_read(opb,32);
     s->q_delta=oggpack_read(opb,32);
-    s->q_quant=oggpack_read(opb,4)+1;
-    s->q_sequencep=oggpack_read(opb,1);
+    s->q_quant=(int)oggpack_read(opb,4)+1;
+    s->q_sequencep=(int)oggpack_read(opb,1);
     if(s->q_sequencep==-1)goto _eofout;
 
     {
       int quantvals=0;
       switch(s->maptype){
       case 1:
-	quantvals=(s->dim==0?0:_book_maptype1_quantvals(s));
+	quantvals=(int)(s->dim==0?0:_book_maptype1_quantvals(s));
 	break;
       case 2:
-	quantvals=s->entries*s->dim;
+	quantvals=(int)(s->entries*s->dim);
 	break;
       }
       
@@ -284,7 +284,7 @@ long vorbis_book_decodev_add(codebook *book,ogg_int32_t *a,
     
     if(shift>=0){
       for(i=0;i<n;){
-	entry = decode_packed_entry_number(book,b);
+	entry = (int)decode_packed_entry_number(book,b);
 	if(entry==-1)return(-1);
 	t     = book->valuelist+entry*book->dim;
 	for (j=0;j<book->dim;)
@@ -292,7 +292,7 @@ long vorbis_book_decodev_add(codebook *book,ogg_int32_t *a,
       }
     }else{
       for(i=0;i<n;){
-	entry = decode_packed_entry_number(book,b);
+	entry = (int)decode_packed_entry_number(book,b);
 	if(entry==-1)return(-1);
 	t     = book->valuelist+entry*book->dim;
 	for (j=0;j<book->dim;)
@@ -316,7 +316,7 @@ long vorbis_book_decodev_set(codebook *book,ogg_int32_t *a,
     if(shift>=0){
       
       for(i=0;i<n;){
-	entry = decode_packed_entry_number(book,b);
+	entry = (int)decode_packed_entry_number(book,b);
 	if(entry==-1)return(-1);
 	t     = book->valuelist+entry*book->dim;
 	for (j=0;i<n && j<book->dim;){
@@ -326,7 +326,7 @@ long vorbis_book_decodev_set(codebook *book,ogg_int32_t *a,
     }else{
       
       for(i=0;i<n;){
-	entry = decode_packed_entry_number(book,b);
+	entry = (int)decode_packed_entry_number(book,b);
 	if(entry==-1)return(-1);
 	t     = book->valuelist+entry*book->dim;
 	for (j=0;i<n && j<book->dim;){
@@ -336,7 +336,7 @@ long vorbis_book_decodev_set(codebook *book,ogg_int32_t *a,
     }
   }else{
 
-    int i,j;
+    int i;
     for(i=0;i<n;){
       a[i++]=0;
     }

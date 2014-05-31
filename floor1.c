@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <ogg/ogg.h>
+#include <yip-imports/ogg/ogg.h>
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
 #include "registry.h"
@@ -78,39 +78,39 @@ static vorbis_info_floor *floor1_unpack (vorbis_info *vi,oggpack_buffer *opb){
 
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)_ogg_calloc(1,sizeof(*info));
   /* read partitions */
-  info->partitions=oggpack_read(opb,5); /* only 0 to 31 legal */
+  info->partitions=(int)oggpack_read(opb,5); /* only 0 to 31 legal */
   for(j=0;j<info->partitions;j++){
-    info->partitionclass[j]=oggpack_read(opb,4); /* only 0 to 15 legal */
+    info->partitionclass[j]=(int)oggpack_read(opb,4); /* only 0 to 15 legal */
     if(info->partitionclass[j]<0)goto err_out;
     if(maxclass<info->partitionclass[j])maxclass=info->partitionclass[j];
   }
 
   /* read partition classes */
   for(j=0;j<maxclass+1;j++){
-    info->class_dim[j]=oggpack_read(opb,3)+1; /* 1 to 8 */
-    info->class_subs[j]=oggpack_read(opb,2); /* 0,1,2,3 bits */
+    info->class_dim[j]=(int)oggpack_read(opb,3)+1; /* 1 to 8 */
+    info->class_subs[j]=(int)oggpack_read(opb,2); /* 0,1,2,3 bits */
     if(info->class_subs[j]<0)
       goto err_out;
-    if(info->class_subs[j])info->class_book[j]=oggpack_read(opb,8);
+    if(info->class_subs[j])info->class_book[j]=(int)oggpack_read(opb,8);
     if(info->class_book[j]<0 || info->class_book[j]>=ci->books)
       goto err_out;
     for(k=0;k<(1<<info->class_subs[j]);k++){
-      info->class_subbook[j][k]=oggpack_read(opb,8)-1;
+      info->class_subbook[j][k]=(int)oggpack_read(opb,8)-1;
       if(info->class_subbook[j][k]<-1 || info->class_subbook[j][k]>=ci->books)
 	goto err_out;
     }
   }
 
   /* read the post list */
-  info->mult=oggpack_read(opb,2)+1;     /* only 1,2,3,4 legal now */ 
-  rangebits=oggpack_read(opb,4);
+  info->mult=(int)oggpack_read(opb,2)+1;     /* only 1,2,3,4 legal now */
+  rangebits=(int)oggpack_read(opb,4);
   if(rangebits<0)goto err_out;
 
   for(j=0,k=0;j<info->partitions;j++){
     count+=info->class_dim[info->partitionclass[j]]; 
     if(count>VIF_POSIT)goto err_out;
     for(;k<count;k++){
-      int t=info->postlist[k+2]=oggpack_read(opb,rangebits);
+      int t=info->postlist[k+2]=(int)oggpack_read(opb,rangebits);
       if(t<0 || t>=(1<<rangebits))
 	goto err_out;
     }
@@ -163,7 +163,7 @@ static vorbis_look_floor *floor1_look(vorbis_dsp_state *vd,vorbis_info_mode *mi,
   qsort(sortpointer,n,sizeof(*sortpointer),icomp);
 
   /* points from sort order back to range number */
-  for(i=0;i<n;i++)look->forward_index[i]=sortpointer[i]-info->postlist;
+  for(i=0;i<n;i++)look->forward_index[i]=(int)(sortpointer[i]-info->postlist);
   
   /* quantize values to multiplier spec */
   switch(info->mult){
@@ -336,8 +336,8 @@ static void *floor1_inverse1(vorbis_block *vb,vorbis_look_floor *in){
   if(oggpack_read(&vb->opb,1)==1){
     int *fit_value=(int *)_vorbis_block_alloc(vb,(look->posts)*sizeof(*fit_value));
     
-    fit_value[0]=oggpack_read(&vb->opb,ilog(look->quant_q-1));
-    fit_value[1]=oggpack_read(&vb->opb,ilog(look->quant_q-1));
+    fit_value[0]=(int)oggpack_read(&vb->opb,ilog(look->quant_q-1));
+    fit_value[1]=(int)oggpack_read(&vb->opb,ilog(look->quant_q-1));
     
     /* partition by partition */
     /* partition by partition */
@@ -350,7 +350,7 @@ static void *floor1_inverse1(vorbis_block *vb,vorbis_look_floor *in){
 
       /* decode the partition's first stage cascade value */
       if(csubbits){
-	cval=vorbis_book_decode(books+info->class_book[classv],&vb->opb);
+	cval=(int)vorbis_book_decode(books+info->class_book[classv],&vb->opb);
 
 	if(cval==-1)goto eop;
       }
@@ -359,7 +359,7 @@ static void *floor1_inverse1(vorbis_block *vb,vorbis_look_floor *in){
 	int book=info->class_subbook[classv][cval&(csub-1)];
 	cval>>=csubbits;
 	if(book>=0){
-	  if((fit_value[j+k]=vorbis_book_decode(books+book,&vb->opb))==-1)
+	  if((fit_value[j+k]=(int)vorbis_book_decode(books+book,&vb->opb))==-1)
 	    goto eop;
 	}else{
 	  fit_value[j+k]=0;
@@ -417,7 +417,7 @@ static int floor1_inverse2(vorbis_block *vb,vorbis_look_floor *in,void *memo,
   vorbis_info_floor1 *info=look->vi;
 
   codec_setup_info   *ci=(codec_setup_info *)vb->vd->vi->codec_setup;
-  int                  n=ci->blocksizes[vb->W]/2;
+  int                  n=(int)ci->blocksizes[vb->W]/2;
   int j;
 
   if(memo){

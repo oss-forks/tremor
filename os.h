@@ -18,7 +18,7 @@
  ********************************************************************/
 
 #include <math.h>
-#include <ogg/os_types.h>
+#include <yip-imports/ogg/os_types.h>
 
 #ifndef _V_IFDEFJAIL_H_
 #  define _V_IFDEFJAIL_H_

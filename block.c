@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ogg/ogg.h>
+#include <yip-imports/ogg/ogg.h>
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
 
@@ -157,8 +157,8 @@ static int _vds_init(vorbis_dsp_state *v,vorbis_info *vi){
   b->modebits=ilog(ci->modes);
 
   /* Vorbis I uses only window type 0 */
-  b->window[0]=_vorbis_window(0,ci->blocksizes[0]/2);
-  b->window[1]=_vorbis_window(0,ci->blocksizes[1]/2);
+  b->window[0]=_vorbis_window(0,(int)(ci->blocksizes[0]/2));
+  b->window[1]=_vorbis_window(0,(int)(ci->blocksizes[1]/2));
 
   /* finish the codebooks */
   if(!ci->fullbooks){
@@ -174,7 +174,7 @@ static int _vds_init(vorbis_dsp_state *v,vorbis_info *vi){
     }
   }
 
-  v->pcm_storage=ci->blocksizes[1];
+  v->pcm_storage=(int)ci->blocksizes[1];
   v->pcm=(ogg_int32_t **)_ogg_malloc(vi->channels*sizeof(*v->pcm));
   v->pcmret=(ogg_int32_t **)_ogg_malloc(vi->channels*sizeof(*v->pcmret));
   for(i=0;i<vi->channels;i++)
@@ -215,7 +215,7 @@ int vorbis_synthesis_restart(vorbis_dsp_state *v){
   if(!ci)return -1;
 
   v->centerW=ci->blocksizes[1]/2;
-  v->pcm_current=v->centerW;
+  v->pcm_current=(int)v->centerW;
   
   v->pcm_returned=-1;
   v->granulepos=-1;
@@ -290,9 +290,9 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
   
   if(vb->pcm){  /* no pcm to process if vorbis_synthesis_trackonly 
                    was called on block */
-    int n=ci->blocksizes[v->W]/2;
-    int n0=ci->blocksizes[0]/2;
-    int n1=ci->blocksizes[1]/2;
+    int n=(int)(ci->blocksizes[v->W]/2);
+    int n0=(int)(ci->blocksizes[0]/2);
+    int n1=(int)(ci->blocksizes[1]/2);
     
     int thisCenter;
     int prevCenter;
@@ -368,9 +368,9 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
       v->pcm_current=thisCenter;
     }else{
       v->pcm_returned=prevCenter;
-      v->pcm_current=prevCenter+
+      v->pcm_current=(int)(prevCenter+
 	ci->blocksizes[v->lW]/4+
-	ci->blocksizes[v->W]/4;
+	ci->blocksizes[v->W]/4);
     }
 
   }

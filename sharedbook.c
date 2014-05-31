@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <ogg/ogg.h>
+#include <yip-imports/ogg/ogg.h>
 #include "misc.h"
 #include "ivorbiscodec.h"
 #include "codebook.h"
@@ -60,8 +60,8 @@ static ogg_int32_t _float32_unpack(long val,int *point){
     exp=-9999;
   }
 
-  *point=exp;
-  return mant;
+  *point=(int)exp;
+  return (ogg_uint32_t)mant;
 }
 
 /* given a list of word lengths, generate a list of codewords.  Works
@@ -159,8 +159,8 @@ ogg_uint32_t *_make_words(long *l,long n,long sparsecount){
    thought of it.  Therefore, we opt on the side of caution */
 long _book_maptype1_quantvals(const static_codebook *b){
   /* get us a starting hint, we'll polish it below */
-  int bits=_ilog(b->entries);
-  int vals=b->entries>>((bits-1)*(b->dim-1)/b->dim);
+  int bits=_ilog((unsigned int)b->entries);
+  int vals=(int)(b->entries>>((bits-1)*(b->dim-1)/b->dim));
 
   while(1){
     long acc=1;
@@ -215,7 +215,7 @@ ogg_int32_t *_book_unquantize(const static_codebook *b,int n,int *sparsemap,
 	 we'll have 'left over' entries; left over entries use zeroed
 	 values (and are wasted).  So don't generate codebooks like
 	 that */
-      quantvals=_book_maptype1_quantvals(b);
+      quantvals=(int)_book_maptype1_quantvals(b);
       for(j=0;j<b->entries;j++){
 	if((sparsemap && b->lengthlist[j]) || !sparsemap){
 	  ogg_int32_t last=0;
@@ -225,7 +225,7 @@ ogg_int32_t *_book_unquantize(const static_codebook *b,int n,int *sparsemap,
 	    int index= (j/indexdiv)%quantvals;
 	    int point=0;
 	    int val=VFLOAT_MULTI(delta,delpoint,
-				 abs(b->quantlist[index]),&point);
+				 abs((int)b->quantlist[index]),&point);
 
 	    val=VFLOAT_ADD(mindel,minpoint,val,point,&point);
 	    val=VFLOAT_ADD(last,lastpoint,val,point,&point);
@@ -259,7 +259,7 @@ ogg_int32_t *_book_unquantize(const static_codebook *b,int n,int *sparsemap,
 	  for(k=0;k<b->dim;k++){
 	    int point=0;
 	    int val=VFLOAT_MULTI(delta,delpoint,
-				 abs(b->quantlist[j*b->dim+k]),&point);
+				 abs((int)b->quantlist[j*b->dim+k]),&point);
 
 	    val=VFLOAT_ADD(mindel,minpoint,val,point,&point);
 	    val=VFLOAT_ADD(last,lastpoint,val,point,&point);
@@ -370,7 +370,7 @@ int vorbis_book_init_decode(codebook *c,const static_codebook *s){
     c->codelist=(ogg_uint32_t *)_ogg_malloc(n*sizeof(*c->codelist));
     /* the index is a reverse index */
     for(i=0;i<n;i++){
-      int position=codep[i]-codes;
+      int position=(int)(codep[i]-codes);
       sortindex[position]=i;
     }
 
@@ -392,7 +392,7 @@ int vorbis_book_init_decode(codebook *c,const static_codebook *s){
       if(s->lengthlist[i]>0)
 	c->dec_codelengths[sortindex[n++]]=s->lengthlist[i];
     
-    c->dec_firsttablen=_ilog(c->used_entries)-4; /* this is magic */
+    c->dec_firsttablen=_ilog((unsigned int)c->used_entries)-4; /* this is magic */
     if(c->dec_firsttablen<5)c->dec_firsttablen=5;
     if(c->dec_firsttablen>8)c->dec_firsttablen=8;
     
@@ -413,7 +413,7 @@ int vorbis_book_init_decode(codebook *c,const static_codebook *s){
     /* now fill in 'unused' entries in the firsttable with hi/lo search
        hints for the non-direct-hits */
     {
-      ogg_uint32_t mask=0xfffffffeUL<<(31-c->dec_firsttablen);
+      ogg_uint32_t mask=(ogg_uint32_t)(0xfffffffeUL<<(31-c->dec_firsttablen));
       long lo=0,hi=0;
       
       for(i=0;i<tabn;i++){
@@ -432,7 +432,7 @@ int vorbis_book_init_decode(codebook *c,const static_codebook *s){
 	    if(loval>0x7fff)loval=0x7fff;
 	    if(hival>0x7fff)hival=0x7fff;
 	    c->dec_firsttable[bitreverse(word)]=
-	      0x80000000UL | (loval<<15) | hival;
+	      (ogg_uint32_t)(0x80000000UL | (loval<<15) | hival);
 	  }
 	}
       }

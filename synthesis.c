@@ -17,7 +17,7 @@
  ********************************************************************/
 
 #include <stdio.h>
-#include <ogg/ogg.h>
+#include <yip-imports/ogg/ogg.h>
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
 #include "registry.h"
@@ -38,7 +38,7 @@ static int _vorbis_synthesis1(vorbis_block *vb,ogg_packet *op,int decodep){
 
   /* first things first.  Make sure decode is ready */
   _vorbis_block_ripcord(vb);
-  oggpack_readinit(opb,op->packet,op->bytes);
+  oggpack_readinit(opb,op->packet,(int)op->bytes);
 
   /* Check the packet type */
   if(oggpack_read(opb,1)!=0){
@@ -47,7 +47,7 @@ static int _vorbis_synthesis1(vorbis_block *vb,ogg_packet *op,int decodep){
   }
 
   /* read our mode and pre/post windowsize */
-  mode=oggpack_read(opb,b->modebits);
+  mode=(int)oggpack_read(opb,b->modebits);
   if(mode==-1)return(OV_EBADPACKET);
   
   vb->mode=mode;
@@ -68,11 +68,11 @@ static int _vorbis_synthesis1(vorbis_block *vb,ogg_packet *op,int decodep){
   /* more setup */
   vb->granulepos=op->granulepos;
   vb->sequence=op->packetno-3; /* first block is third packet */
-  vb->eofflag=op->e_o_s;
+  vb->eofflag=(int)op->e_o_s;
 
   if(decodep){
     /* alloc pcm passback storage */
-    vb->pcmend=ci->blocksizes[vb->W];
+    vb->pcmend=(int)ci->blocksizes[vb->W];
     vb->pcm=(ogg_int32_t **)_vorbis_block_alloc(vb,sizeof(*vb->pcm)*vi->channels);
     for(i=0;i<vi->channels;i++)
       vb->pcm[i]=(ogg_int32_t *)_vorbis_block_alloc(vb,vb->pcmend*sizeof(*vb->pcm[i]));
@@ -105,7 +105,7 @@ long vorbis_packet_blocksize(vorbis_info *vi,ogg_packet *op){
   oggpack_buffer       opb;
   int                  mode;
  
-  oggpack_readinit(&opb,op->packet,op->bytes);
+  oggpack_readinit(&opb,op->packet,(int)op->bytes);
 
   /* Check the packet type */
   if(oggpack_read(&opb,1)!=0){
@@ -122,7 +122,7 @@ long vorbis_packet_blocksize(vorbis_info *vi,ogg_packet *op){
     }
 
     /* read our mode and pre/post windowsize */
-    mode=oggpack_read(&opb,modebits);
+    mode=(int)oggpack_read(&opb,modebits);
   }
   if(mode==-1)return(OV_EBADPACKET);
   return(ci->blocksizes[ci->mode_param[mode]->blockflag]);

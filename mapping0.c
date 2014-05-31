@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <ogg/ogg.h>
+#include <yip-imports/ogg/ogg.h>
 #include "ivorbiscodec.h"
 #include "mdct.h"
 #include "codec_internal.h"
@@ -131,22 +131,22 @@ static vorbis_info_mapping *mapping0_unpack(vorbis_info *vi,oggpack_buffer *opb)
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
   memset(info,0,sizeof(*info));
 
-  b=oggpack_read(opb,1);
+  b=(int)oggpack_read(opb,1);
   if(b<0)goto err_out;
   if(b){
-    info->submaps=oggpack_read(opb,4)+1;
+    info->submaps=(int)oggpack_read(opb,4)+1;
     if(info->submaps<=0)goto err_out;
   }else
     info->submaps=1;
 
-  b=oggpack_read(opb,1);
+  b=(int)oggpack_read(opb,1);
   if(b<0)goto err_out;
   if(b){
-    info->coupling_steps=oggpack_read(opb,8)+1;
+    info->coupling_steps=(int)oggpack_read(opb,8)+1;
     if(info->coupling_steps<=0)goto err_out;
     for(i=0;i<info->coupling_steps;i++){
-      int testM=info->coupling_mag[i]=oggpack_read(opb,ilog(vi->channels));
-      int testA=info->coupling_ang[i]=oggpack_read(opb,ilog(vi->channels));
+      int testM=info->coupling_mag[i]=(int)oggpack_read(opb,ilog(vi->channels));
+      int testA=info->coupling_ang[i]=(int)oggpack_read(opb,ilog(vi->channels));
 
       if(testM<0 || 
 	 testA<0 || 
@@ -161,16 +161,16 @@ static vorbis_info_mapping *mapping0_unpack(vorbis_info *vi,oggpack_buffer *opb)
     
   if(info->submaps>1){
     for(i=0;i<vi->channels;i++){
-      info->chmuxlist[i]=oggpack_read(opb,4);
+      info->chmuxlist[i]=(int)oggpack_read(opb,4);
       if(info->chmuxlist[i]>=info->submaps || info->chmuxlist[i]<0)goto err_out;
     }
   }
   for(i=0;i<info->submaps;i++){
-    int temp=oggpack_read(opb,8);
+    int temp=(int)oggpack_read(opb,8);
     if(temp>=ci->times)goto err_out;
-    info->floorsubmap[i]=oggpack_read(opb,8);
+    info->floorsubmap[i]=(int)oggpack_read(opb,8);
     if(info->floorsubmap[i]>=ci->floors || info->floorsubmap[i]<0)goto err_out;
-    info->residuesubmap[i]=oggpack_read(opb,8);
+    info->residuesubmap[i]=(int)oggpack_read(opb,8);
     if(info->residuesubmap[i]>=ci->residues || info->residuesubmap[i]<0)
       goto err_out;
   }
@@ -192,7 +192,7 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
   vorbis_info_mapping0 *info=look->map;
 
   int                   i,j;
-  long                  n=vb->pcmend=ci->blocksizes[vb->W];
+  long                  n=vb->pcmend=(int)ci->blocksizes[vb->W];
 
   ogg_int32_t **pcmbundle=(ogg_int32_t **)alloca(sizeof(*pcmbundle)*vi->channels);
   int    *zerobundle=(int *)alloca(sizeof(*zerobundle)*vi->channels);
@@ -293,7 +293,7 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
   /* only MDCT right now.... */
   for(i=0;i<vi->channels;i++){
     ogg_int32_t *pcm=vb->pcm[i];
-    mdct_backward(n,pcm,pcm);
+    mdct_backward((int)n,pcm,pcm);
   }
 
   //for(j=0;j<vi->channels;j++)
@@ -303,7 +303,7 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
   for(i=0;i<vi->channels;i++){
     ogg_int32_t *pcm=vb->pcm[i];
     if(nonzero[i])
-      _vorbis_apply_window(pcm,b->window,ci->blocksizes,vb->lW,vb->W,vb->nW);
+      _vorbis_apply_window(pcm,b->window,ci->blocksizes,(int)vb->lW,(int)vb->W,(int)vb->nW);
     else
       for(j=0;j<n;j++)
 	pcm[j]=0;

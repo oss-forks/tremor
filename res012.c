@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <ogg/ogg.h>
+#include <yip-imports/ogg/ogg.h>
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
 #include "registry.h"
@@ -94,19 +94,19 @@ vorbis_info_residue *res0_unpack(vorbis_info *vi,oggpack_buffer *opb){
 
   info->begin=oggpack_read(opb,24);
   info->end=oggpack_read(opb,24);
-  info->grouping=oggpack_read(opb,24)+1;
-  info->partitions=oggpack_read(opb,6)+1;
-  info->groupbook=oggpack_read(opb,8);
+  info->grouping=(int)(oggpack_read(opb,24)+1);
+  info->partitions=(int)(oggpack_read(opb,6)+1);
+  info->groupbook=(int)oggpack_read(opb,8);
 
   /* check for premature EOP */
   if(info->groupbook<0)goto errout;
 
   for(j=0;j<info->partitions;j++){
-    int cascade=oggpack_read(opb,3);
-    int cflag=oggpack_read(opb,1);
+    int cascade=(int)oggpack_read(opb,3);
+    int cflag=(int)oggpack_read(opb,1);
     if(cflag<0) goto errout;
     if(cflag){
-      int c=oggpack_read(opb,5);
+      int c=(int)oggpack_read(opb,5);
       if(c<0) goto errout;
       cascade|=(c<<3);
     }
@@ -115,7 +115,7 @@ vorbis_info_residue *res0_unpack(vorbis_info *vi,oggpack_buffer *opb){
     acc+=icount(cascade);
   }
   for(j=0;j<acc;j++){
-    int book=oggpack_read(opb,8);
+    int book=(int)oggpack_read(opb,8);
     if(book<0) goto errout;
     info->booklist[j]=book;
   }
@@ -133,8 +133,8 @@ vorbis_info_residue *res0_unpack(vorbis_info *vi,oggpack_buffer *opb){
      accident.  These files should continue to be playable, but don't
      allow an exploit */
   {
-    int entries = ci->book_param[info->groupbook]->entries;
-    int dim = ci->book_param[info->groupbook]->dim;
+    int entries = (int)ci->book_param[info->groupbook]->entries;
+    int dim = (int)ci->book_param[info->groupbook]->dim;
     int partvals = 1;
     if (dim<1) goto errout;
     while(dim>0){
@@ -166,7 +166,7 @@ vorbis_look_residue *res0_look(vorbis_dsp_state *vd,vorbis_info_mode *vm,
   look->parts=info->partitions;
   look->fullbooks=ci->fullbooks;
   look->phrasebook=ci->fullbooks+info->groupbook;
-  dim=look->phrasebook->dim;
+  dim=(int)look->phrasebook->dim;
 
   look->partbooks=(codebook ***)_ogg_calloc(look->parts,sizeof(*look->partbooks));
 
@@ -198,7 +198,7 @@ vorbis_look_residue *res0_look(vorbis_dsp_state *vd,vorbis_info_mode *vm,
       long deco=val/mult;
       val-=deco*mult;
       mult/=look->parts;
-      look->decodemap[j][k]=deco;
+      look->decodemap[j][k]=(int)deco;
     }
   }
 
@@ -218,10 +218,10 @@ static int _01inverse(vorbis_block *vb,vorbis_look_residue *vl,
 
   /* move all this setup out later */
   int samples_per_partition=info->grouping;
-  int partitions_per_word=look->phrasebook->dim;
+  int partitions_per_word=(int)look->phrasebook->dim;
   int max=vb->pcmend>>1;
-  int end=(info->end<max?info->end:max);
-  int n=end-info->begin;
+  int end=(int)(info->end<max?info->end:max);
+  int n=(int)(end-info->begin);
 
   if(n>0){
     int partvals=n/samples_per_partition;
@@ -239,7 +239,7 @@ static int _01inverse(vorbis_block *vb,vorbis_look_residue *vl,
 	if(s==0){
 	  /* fetch the partition word for each channel */
 	  for(j=0;j<ch;j++){
-	    int temp=vorbis_book_decode(look->phrasebook,&vb->opb);
+	    int temp=(int)vorbis_book_decode(look->phrasebook,&vb->opb);
 	    if(temp==-1 || temp>=info->partvals)goto eopbreak;
 	    partword[j][l]=look->decodemap[temp];
 	    if(partword[j][l]==NULL)goto errout;
@@ -299,17 +299,17 @@ int res2_inverse(vorbis_block *vb,vorbis_look_residue *vl,
 
   /* move all this setup out later */
   int samples_per_partition=info->grouping;
-  int partitions_per_word=look->phrasebook->dim;
+  int partitions_per_word=(int)look->phrasebook->dim;
   int max=(vb->pcmend*ch)>>1;
-  int end=(info->end<max?info->end:max);
-  int n=end-info->begin;
+  int end=(int)(info->end<max?info->end:max);
+  int n=(int)(end-info->begin);
 
   if(n>0){
     
     int partvals=n/samples_per_partition;
     int partwords=(partvals+partitions_per_word-1)/partitions_per_word;
     int **partword=(int **)_vorbis_block_alloc(vb,partwords*sizeof(*partword));
-    int beginoff=info->begin/ch;
+    int beginoff=(int)info->begin/ch;
     
     for(i=0;i<ch;i++)if(nonzero[i])break;
     if(i==ch)return(0); /* no nonzero vectors */
@@ -321,7 +321,7 @@ int res2_inverse(vorbis_block *vb,vorbis_look_residue *vl,
 	
 	if(s==0){
 	  /* fetch the partition word */
-	  int temp=vorbis_book_decode(look->phrasebook,&vb->opb);
+	  int temp=(int)vorbis_book_decode(look->phrasebook,&vb->opb);
 	  if(temp==-1 || temp>=info->partvals)goto eopbreak;
 	  partword[l]=look->decodemap[temp];
 	  if(partword[l]==NULL)goto errout;
