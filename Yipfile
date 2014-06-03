@@ -31,6 +31,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 
 import libogg
 
+public_headers
+{
+	ivorbisfile.h
+}
+
 sources
 {
 	asm_arm.h
@@ -45,7 +50,6 @@ sources
 	floor1.c
 	info.c
 	ivorbiscodec.h
-	ivorbisfile.h
 	lsp_lookup.h
 	mapping0.c
 	mdct.c
