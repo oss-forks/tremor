@@ -863,7 +863,7 @@ static int _fetch_and_process_packet(OggVorbis_File *vf,
    fseek64 */
 static int _fseek64_wrap(FILE *f,ogg_int64_t off,int whence){
   if(f==NULL)return(-1);
-  return fseek(f,off,whence);
+  return fseek(f,(long)off,whence);
 }
 
 static int _ov_open1(void *f,OggVorbis_File *vf,const char *initial,
@@ -1069,11 +1069,11 @@ long ov_bitrate(OggVorbis_File *vf,int i){
      * gcc 3.x on x86 miscompiled this at optimisation level 2 and above,
      * so this is slightly transformed to make it work.
      */
-    return(bits*1000/ov_time_total(vf,-1));
+    return(long)(bits*1000/ov_time_total(vf,-1));
   }else{
     if(vf->seekable){
       /* return the actual bitrate */
-      return((vf->offsets[i+1]-vf->dataoffsets[i])*8000/ov_time_total(vf,i));
+      return(long)((vf->offsets[i+1]-vf->dataoffsets[i])*8000/ov_time_total(vf,i));
     }else{
       /* return nominal if set */
       if(vf->vi[i].bitrate_nominal>0){
@@ -1101,7 +1101,7 @@ long ov_bitrate_instant(OggVorbis_File *vf){
   long ret;
   if(vf->ready_state<OPENED)return(OV_EINVAL);
   if(vf->samptrack==0)return(OV_FALSE);
-  ret=vf->bittrack/vf->samptrack*vf->vi[link].rate;
+  ret=(long)(vf->bittrack/vf->samptrack*vf->vi[link].rate);
   vf->bittrack=0;
   vf->samptrack=0;
   return(ret);
@@ -1655,7 +1655,7 @@ int ov_pcm_seek(OggVorbis_File *vf,ogg_int64_t pos){
     ogg_int64_t target=pos-vf->pcm_offset;
     long samples=vorbis_synthesis_pcmout(&vf->vd,NULL);
 
-    if(samples>target)samples=target;
+    if(samples>target)samples=(long)target;
     vorbis_synthesis_read(&vf->vd,(int)samples);
     vf->pcm_offset+=samples;
 
