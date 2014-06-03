@@ -45,6 +45,11 @@
 #  define BYTE_ORDER LITTLE_ENDIAN
 #endif
 
+#ifndef BYTE_ORDER
+ #define LITTLE_ENDIAN 1
+ #define BYTE_ORDER LITTLE_ENDIAN
+#endif
+
 #ifdef HAVE_ALLOCA_H
 #  include <alloca.h>
 #endif

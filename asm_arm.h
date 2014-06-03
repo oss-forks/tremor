@@ -15,6 +15,11 @@
 
  ********************************************************************/
 
+#if (defined(__GNUC__) && !defined(__clang__)) && \
+	(defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__))
+#define _ARM_ASSEM_
+#endif
+
 #ifdef _ARM_ASSEM_
 
 #if !defined(_V_WIDE_MATH) && !defined(_LOW_ACCURACY_)
